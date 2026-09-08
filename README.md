@@ -29,16 +29,16 @@ codebase writes to a disposable cache on your own machine.
    ┌──────────────┐
    │    BANKS     │
    └──────┬───────┘
-          │  ❶ bank import (SimpleFIN / GoCardless)
+          │  ❶ bank import (SimpleFIN / GoCardless / Pluggy.ai)
           │     you trigger this in Actual; nothing here does it for you
           ▼
    ┌─────────────────────────────────────────────┐        ┌──────────────────┐
-   │        ACTUAL SYNC SERVER  :5000            │◀──────▶│    ACTUAL UI     │
-   │                                              │        │  browser / app   │
-   │   file-<id>.blob      zip: db.sqlite + meta  │  push  │  read + write    │
-   │   group-<id>.sqlite   append-only CRDT log   │  pull  └──────────────────┘
-   │                                              │
-   │   the source of truth — but not queryable    │
+   │        ACTUAL SYNC SERVER  :5006            │◀──────▶│    ACTUAL UI     │
+   │                                             │  push  │  browser / app   │
+   │  file-<id>.blob     zip: db.sqlite + meta   │  pull  │  read + write    │
+   │  group-<id>.sqlite  append-only CRDT log    │        └──────────────────┘
+   │                                             │
+   │  the source of truth — but not queryable    │
    └────────────────────┬────────────────────────┘
                         │
                         │  ❷ read-only pull: snapshot + messages since our cursor
@@ -46,17 +46,17 @@ codebase writes to a disposable cache on your own machine.
                         │     POST /sync/sync   { since, messages: [] }
                         ▼
    ┌─────────────────────────────────────────────┐
-   │         actual-mcp  (this project)          │
-   │                                              │
-   │   local replica in $XDG_CACHE_HOME           │
-   │   snapshot ⊕ replay(messages) = current      │
-   │   cache, not state — safe to delete          │
+   │        actual-mcp  (this project)           │
+   │                                             │
+   │  local replica in $XDG_CACHE_HOME           │
+   │  snapshot + replay(messages) = current      │
+   │  cache, not state — safe to delete          │
    └────────────────────┬────────────────────────┘
                         │
                         │  ❸ MCP over stdio (JSON-RPC 2.0)
                         ▼
    ┌─────────────────────────────────────────────┐
-   │   MCP CLIENT — Claude Desktop / Claude Code  │
+   │  MCP CLIENT — Claude Desktop / Claude Code  │
    └─────────────────────────────────────────────┘
 ```
 
@@ -202,7 +202,7 @@ unless `WSLENV` names them.** Without it the server starts and immediately exits
       "command": "wsl.exe",
       "args": ["-e", "/home/you/actual-mcp/target/release/actual-mcp"],
       "env": {
-        "ACTUAL_SERVER_URL": "http://localhost:5000",
+        "ACTUAL_SERVER_URL": "http://localhost:5006",
         "ACTUAL_PASSWORD": "your-password",
         "WSLENV": "ACTUAL_SERVER_URL:ACTUAL_PASSWORD"
       }
